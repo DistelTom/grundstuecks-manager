@@ -1,9 +1,24 @@
 import { PrismaClient } from '@prisma/client'
+import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Seeding database...')
+
+  // Create demo user
+  const demoPassword = await hash('demo123', 12)
+  const demoUser = await prisma.user.upsert({
+    where: { email: 'demo@example.de' },
+    update: {},
+    create: {
+      email: 'demo@example.de',
+      name: 'Demo User',
+      password: demoPassword,
+      role: 'ADMIN',
+    },
+  })
+  console.log('✅ Demo user created:', demoUser.email)
 
   // Create default owner contact
   const defaultOwner = await prisma.contact.upsert({
