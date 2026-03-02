@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌾 GrundstücksManager
 
-## Getting Started
+**Enterprise-grade Land & Property Management für Landwirtschaft**
 
-First, run the development server:
+## 🎯 Vision
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Ein modernes, professionelles System zur Verwaltung von landwirtschaftlichen Grundstücken - Äcker, Wiesen, Wälder und mehr. Inspiriert von den besten Farm-Management-Tools, aber einfacher und fokussierter auf deutsche Landwirte.
+
+## ✨ Features
+
+### Phase 1 - MVP (Tonight)
+- ✅ Grundstücke verwalten (CRUD)
+- ✅ Flurstück, Grundbuch, Größe, Art
+- ✅ Kontakte (Eigentümer, Pächter)
+- ✅ Filter & Suche
+- ✅ Modernes UI (shadcn/ui)
+- ✅ Responsive Design
+
+### Phase 2 - Advanced (Tomorrow)
+- 🗺️ Kartenansicht (OpenStreetMap)
+- 📄 Dokumenten-Upload
+- 📊 Dashboard mit Statistiken
+- 💰 Pacht-Verwaltung
+- 📤 Export (CSV/PDF)
+
+### Phase 3 - Pro
+- 🇩🇪 Subventionen tracking
+- 💬 Finanz-Übersicht
+- 📱 Mobile Optimierung
+- 🔔 Erinnerungen & Fristen
+
+## 🛠️ Tech Stack
+
+```yaml
+Frontend:  Next.js 16 (App Router)
+Language:  TypeScript
+Styling:   Tailwind CSS
+UI:        shadcn/ui
+Database:  Prisma + PostgreSQL (Vercel)
+Auth:      NextAuth.js v5
+Maps:      React-Leaflet (OSM)
+Charts:    Recharts
+Deploy:    Vercel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📋 Datenmodell
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Properties (Grundstücke)
+- Flurstücknummer, Grundbuchblatt
+- Größe (ha/m²)
+- Art (Acker, Wiese, Wald, etc.)
+- Lage (Gemeinde, Gemarkung, Flur)
+- Eigentümer & Pächter
+- Geo-Koordinaten
+- Dokumente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Contacts
+- Eigentümer, Pächter, Nachbarn
+- Bankdaten für Pachtzahlungen
 
-## Learn More
+### Documents
+- Grundbuchauszüge
+- Karten
+- Pachtverträge
+- Luftbilder
 
-To learn more about Next.js, take a look at the following resources:
+## 🚀 Quick Start
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Install
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Database
+npx prisma generate
+npx prisma db push
 
-## Deploy on Vercel
+# Dev
+npm run dev
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Build
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📂 Projektstruktur
+
+```
+grundstuecks-manager/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── dashboard/          # Dashboard
+│   │   ├── grundstuecke/       # Grundstücke
+│   │   ├── karte/              # Kartenansicht
+│   │   └── api/                # API Routes
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui
+│   │   ├── property-card.tsx
+│   │   └── stats-card.tsx
+│   ├── lib/
+│   │   ├── prisma.ts
+│   │   └── utils.ts
+│   └── types/
+├── prisma/
+│   └── schema.prisma
+└── public/
+```
+
+## 🎨 Design Philosophy
+
+- **Clean & Modern** - Weniger ist mehr
+- **Mobile First** - Auch im Feld nutzbar
+- **Schnell** - Sofortige Aktionen
+- **Intuitiv** - Keine Schulung nötig
+- **Hochwertig** - Enterprise-grade UI/UX
+
+## 📊 Roadmap
+
+- [x] Projekt Setup
+- [ ] Prisma Schema
+- [ ] UI Components
+- [ ] Grundstücke CRUD
+- [ ] Dashboard
+- [ ] Kartenansicht
+- [ ] Dokumente
+- [ ] Tests
+- [ ] Deploy
+
+## 👥 Für wen?
+
+- 🌾 Landwirte
+- 🏡 Grundbesitzer
+- 📋 Forstwirte
+- 🏞️ Naturpark-Verwalter
+- 👨‍💼 Landwirtschafts-Unternehmen
+
+## 📄 Lizenz
+
+MIT
+
+---
+
+**Gebaut mit ❤️ für deutsche Landwirtschaft**

@@ -1,0 +1,297 @@
+// Prisma Schema für GrundstücksManager
+// Enterprise-grade Land Management für Landwirtschaft
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// GRUNDSTÜCKE (Core Model)
+// ============================================================================
+
+model Property {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Identifikation (Pflichtfelder)
+  parcelNumber    String        @unique // Flurstücksnummer (z.B. "123/45")
+  landRegistry    String        // Grundbuchblatt (z.B. "GB 456")
+
+  // Lage
+  municipality    String        // Gemeinde
+  district        String?       // Gemarkung
+  lot             String?       // Flur
+  location        String?       // Lagebeschreibung (frei text)
+
+  // Geodaten
+  areaHa          Float         // Größe in Hektar
+  areaSqM         Float         // Größe in m² (berechnet)
+  polygon         Json?         // GeoJSON Polygon für Karte
+  latitude        Float?        // Zentrum Lat
+  longitude       Float?        // Zentrum Lng
+
+  // Klassifikation
+  type            PropertyType  // Art der Fläche
+  soilQuality     String?       // Bodengüte (z.B. "A2", "B3", "C1")
+  irrigation      Boolean       @default(false) // Bewässerung
+
+  // Eigentum & Nutzung
+  ownerId         String
+  owner           Contact       @relation("PropertyOwner", fields: [ownerId], references: [id])
+
+  tenantId        String?
+  tenant          Contact?      @relation("PropertyTenant", fields: [tenantId], references: [id])
+
+  leaseStart      DateTime?     // Pachtbeginn
+  leaseEnd        DateTime?     // Pachtende
+  leasePricePerHa Float?        // Pacht pro Hektar/Jahr
+
+  // Kauf-Daten
+  purchaseDate    DateTime?     // Kaufdatum
+  purchasePrice   Float?        // Kaufpreis in €
+
+  // Status & Notizen
+  status          PropertyStatus @default(AKTIV)
+  notes           String?       @db.Text
+  tags            String[]      // Für Filter/Suche
+
+  // Relationen
+  documents       Document[]
+  activities      Activity[]
+  subsidies       Subsidy[]
+
+  @@index([municipality])
+  @@index([type])
+  @@index([ownerId])
+  @@index([status])
+  @@map("properties")
+}
+
+enum PropertyType {
+  ACKER       // Ackerland
+  WIESE       // Grünland/Wiese
+  WALD        // Wald
+  WEIDE       // Weide
+  OBST        // Obstplantage
+  WEINBERG    // Weinberg
+  GEBAEUDE    // Gebäude/Hofstelle
+  SONSTIGES   // Sonstiges
+}
+
+enum PropertyStatus {
+  AKTIV        // In Nutzung
+  VERKAUFT     // Verkauft
+  VERPAchtetET // Verpachtet
+  BRACHLIEGEND // Brachliegend
+  IN_PLANUNG   // In Planung
+}
+
+// ============================================================================
+// KONTAKTE
+// ============================================================================
+
+model Contact {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Klassifikation
+  type            ContactType
+  company         String?       // Firma (optional)
+
+  // Personalien
+  name            String        // Vollständiger Name
+  firstName       String?
+  lastName        String?
+
+  // Kontakt
+  email           String?       @unique
+  phone           String?
+  mobile          String?
+
+  // Adresse
+  street          String?
+  postalCode      String?
+  city            String?
+  country         String?       @default("Deutschland")
+
+  // Bankdaten (für Pachtzahlungen)
+  iban            String?
+  bic             String?
+  bank            String?
+
+  // Notizen
+  notes           String?       @db.Text
+
+  // Relationen
+  ownedProperties Property[]    @relation("PropertyOwner")
+  rentedProperties Property[]   @relation("PropertyTenant")
+
+  @@index([type])
+  @@index([lastName])
+  @@map("contacts")
+}
+
+enum ContactType {
+  EIGENTUEMER  // Eigentümer
+  PAECHTER     // Pächter
+  NACHBAR      // Nachbar
+  BEHOERDE     // Behörde
+  BERATER      // Berater
+  LIEFERANT    // Lieferant
+  SONSTIGES    // Sonstiges
+}
+
+// ============================================================================
+// DOKUMENTE
+// ============================================================================
+
+model Document {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Zuordnung
+  propertyId      String
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // Metadaten
+  type            DocumentType
+  title           String
+  description     String?
+
+  // Datei
+  fileUrl         String        // Vercel Blob / S3 URL
+  fileName        String
+  fileSize        Int           // Bytes
+  mimeType        String        // MIME type
+
+  // Datum (z.B. Vertragsdatum)
+  documentDate    DateTime?
+  validUntil      DateTime?     // Gültig bis
+
+  // Notizen
+  notes           String?
+
+  @@index([propertyId])
+  @@index([type])
+  @@map("documents")
+}
+
+enum DocumentType {
+  GRUNDBUCH        // Grundbuchauszug
+  KARTE            // Karte / Flurkarte
+  PACHTVERTRAG     // Pachtvertrag
+  KAUFVERTRAG      // Kaufvertrag
+  LUFTBILD         // Luftbild
+  BODENSCHAETZUNG  // Bodenschätzung
+  SUBVENTIONS_ANTRAG // Förderantrag
+  STEUER           // Steuerunterlagen
+  SONSTIGES        // Sonstiges
+}
+
+// ============================================================================
+// SUBVENTIONEN & FÖRDERUNGEN
+// ============================================================================
+
+model Subsidy {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Zuordnung
+  propertyId      String?
+  property        Property?     @relation(fields: [propertyId], references: [id])
+
+  // Programm
+  program         String        // z.B. "Förderung Ökolandbau 2025"
+  programNumber   String?       // Förderkennzeichen
+
+  // Details
+  type            String        // Art der Förderung
+  description     String?       @db.Text
+
+  // Geld
+  amount          Float         // Förderbetrag in €
+  paidOut         Float?        // Ausgezahlt
+
+  // Zeitraum
+  year            Int           // Förderjahr
+  appliedAt       DateTime?     // Antrag gestellt
+  approvedAt      DateTime?     // Bewilligt
+  paidOutAt       DateTime?     // Ausgezahlt
+
+  // Status
+  status          SubsidyStatus @default(ANGELEGT)
+
+  // Notizen
+  notes           String?       @db.Text
+
+  @@index([year])
+  @@index([status])
+  @@map("subsidies")
+}
+
+enum SubsidyStatus {
+  ANGELEGT    // Angelegt
+  BEANTRAGT   // Antrag eingereicht
+  BEWILLIGT   // Bewilligt
+  AUSGEZAHLT  // Ausgezahlt
+  ABGELEHNT   // Abgelehnt
+}
+
+// ============================================================================
+// AKTIVITÄTEN & ERTRÄGE
+// ============================================================================
+
+model Activity {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Zuordnung
+  propertyId      String
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // Aktivität
+  type            ActivityType
+  title           String
+  description     String?       @db.Text
+
+  // Datum
+  date            DateTime
+
+  // Für Ernte/Aussaat
+  cropType        String?       // z.B. "Weizen", "Gerste", "Mais"
+  yieldAmount     Float?        // Ertrag in Tonnen
+  yieldPerHa      Float?        // Ertrag pro Hektar
+
+  // Kosten
+  costs           Float?        // Kosten in €
+
+  // Notizen
+  notes           String?       @db.Text
+
+  @@index([propertyId])
+  @@index([type])
+  @@index([date])
+  @@map("activities")
+}
+
+enum ActivityType {
+  AUSSAAT         // Aussaat
+  ERNTE           // Ernte
+  DUENGUNG        // Düngung
+  PFLANZENSCHUTZ  // Pflanzenschutz
+  BEARBEITUNG     // Bodenbearbeitung
+  BEWASSERUNG     // Bewässerung
+  PFLEGE          // Pflege
+  INSPEKTION      // Kontrolle/Inspektion
+  SONSTIGES       // Sonstiges
+}
